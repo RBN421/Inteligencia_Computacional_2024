@@ -28,11 +28,13 @@ algoritmos genéticos, optimización de enjambres (PSO) y sistemas difusos.*
     3. Tipos de algoritmos de optimización de enjambre.
 
 
-`Módulo 3.` **Sistemas difusos**
+`Módulo 3.` **Aprendizaje por Refuerzo y Sistemas difusos**
     
-    1. Introducción y características de los sistemas difusos.
+    1. Introducción al Aprendizaje por refuerzo.
     
-    2. Aplicaciones de los sistemas y razonamiento inductivo difuso
+    2. Introducción y características de los sistemas difusos.
+    
+    3. Aplicaciones de los sistemas y razonamiento inductivo difuso
 
-    3. Algoritmos híbridos y sus beneficios, conceptos generales de combinación de algoritmos
+    4. Algoritmos híbridos y sus beneficios, conceptos generales de combinación de algoritmos
     
