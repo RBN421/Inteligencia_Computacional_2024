@@ -1,5 +1,8 @@
 import numpy as np
 import copy
+import random
+import sys
+import math
 
 class AG:
     def __init__(self, fun_cost):
@@ -123,102 +126,117 @@ class AG:
         return(out, bestsolution, bestcost)
 
 # Clase PSO
+import random
+import math # cos() for Rastrigin
+import copy # array-copying convenience
+import sys # max float
+
+
+#particle class
 class Particula:
-    def __init__(self, fitness, dim, minx, maxx, seed):
+    def __init__(self, fitness, x_points, y_points, dim, minx, maxx, seed):
         self.rnd = random.Random(seed)
-        
-        #Inicializar la posición de la particula con 0.0
-        self.posicion = [0.0 for i in range (dim)]
-        
-        #Inicializar la velocidades de las particulas
-        self.velocidad = [0.0 for i in range(dim)]
-        
-        #inicializamos la lista de la mejor posición de la particula, con ceros
-        self.mejor_posicion = [0.0 for i in range(dim)]
-        
-        #Obtener de manera aleatoria velocidades y posiciones dependiendo de minx, maxx
+
+        # initialize position of the particle with 0.0 value
+        self.position = [0.0 for i in range(dim)]
+
+        # initialize velocity of the particle with 0.0 value
+        self.velocity = [0.0 for i in range(dim)]
+
+        # initialize best particle position of the particle with 0.0 value
+        self.best_part_pos = [0.0 for i in range(dim)]
+
+        # loop dim times to calculate random position and velocity
+        # range of position and velocity is [minx, max]
         for i in range(dim):
-            self.posicion[i] = ((maxx - minx)*self.rnd.random() + minx)
-            self.velocidad[i] = ((maxx - minx)*self.rnd.random() + minx)
-            
-        # Evaluar las particulas en la función de costo
-        self.fitness = fitness(self.posicion)
-        
-        #Inicializar la mejor posicion y el mejor fitness
-        self.mejor_posicion_sig = copy.copy(self.posicion)
-        self.mejor_fitnessVal_sig = self.fitness #mejor fitness 
-        
-    #Función del pso principal (donde se realiza la optimización)
-    def pso(fitness, max_iter, n, dim, minx, maxx):
-        # Hiperparámetros
-        w = 0.729 #inercia
-        c1 = 1.49445 # coeficiente cognitivo
-        c2 = 1.49445 #coeficiente social
-        
+            self.position[i] = ((maxx - minx)*self.rnd.random() + minx)
+            self.velocity[i] = ((maxx - minx)*self.rnd.random() + minx)
+
+        # compute fitness of particle
+        self.fitness = fitness(self.position,x_points, y_points) # curr fitness
+
+        # initialize best position and fitness of this particle
+        self.best_part_pos = copy.copy(self.position)
+        self.best_part_fitnessVal = self.fitness # best fitness
+
+    # particle swarm optimization function
+    def pso(fitness, x_points, y_points, max_iter, n, dim, minx, maxx):
+        # hyper parameters
+        w = 3 # inertia
+        c1 = 2.3 # cognitive (particle)
+        c2 = 2.5 # social (swarm)
+
         rnd = random.Random(0)
-        
-        #Crear un enjambre de particulas de n elementos
-        swarm = [Particula(fitness, dim, minx, maxx, 0) for i in range(n)]
-        
-        #Calcular el valor de la mejor posicion y el mejor fitness en el enjambre de particulas
-        mejor_enjambre_sig = [0.0 for i in range(dim)]
-        mejor_enjambre_fitnessVal = sys.float_info.max
-        
-        #Calcular la mejor particula con su fitness
-        for i in range(n): #recorrer en cada particula
-            if swarm[i].fitness < mejor_enjambre_fitnessVal:
-                mejor_enjambre_fitnessVal = swarm[i].fitness
-                mejor_enjambre_sig = copy.copy(swarm[i].posicion)
-                
-        # Loop principal del algoritmo de PSO
-        
+
+        # create n random particles
+        swarm = [Particle(fitness, x_points, y_points, dim, minx, maxx, i) for i in range(n)]
+
+        # compute the value of best_position and best_fitness in swarm
+        best_swarm_pos = [0.0 for i in range(dim)]
+        best_swarm_fitnessVal = sys.float_info.max # swarm best
+
+        # computer best particle of swarm and it's fitness
+        for i in range(n): # check each particle
+            if swarm[i].fitness < best_swarm_fitnessVal:
+                best_swarm_fitnessVal = swarm[i].fitness
+                best_swarm_pos = copy.copy(swarm[i].position)
+
+        # main loop of pso
         Iter = 0
-        mejor_enjambre_sig_hist = {}
-        mejor_enjambre_fitnessVal_hist = {}
+        best_swarm_pos_hist = {}
+        best_swarm_fitnessVal_hist = {}
         
         while Iter < max_iter:
-            mejor_enjambre_sig_hist[Iter] = mejor_enjambre_sig
-            mejor_enjambre_fitnessVal_hist = mejor_enjambre_fitnessVal
-            
-            #imprimir por cada 10 iteraciones el número de iteración y el mejor fitness
-            if Iter %10 ==0 and Iter>1:
-                print(f"Iteración= {Iter}, mejor_fitness {mejor_enjambre_fitnessVal}")
-                print(f"Mejor Posición = {mejor_enjambre_sig}")
-            
-            for i in range(n):
-                #Calcular la velocidad de cada particula
+
+            # after every 10 iterations
+            # print iteration number and best fitness value so far
+            best_swarm_pos_hist[Iter] = best_swarm_pos
+            best_swarm_fitnessVal_hist[Iter] = best_swarm_fitnessVal
+            if Iter % 10 == 0 and Iter > 1:
+                print("Iter = " + str(Iter) + " best fitness = %.3f" % best_swarm_fitnessVal)
+                print(f'best_position: {best_swarm_pos}')
+
+            for i in range(n): # process each particle
+
+                # compute new velocity of curr particle
                 for k in range(dim):
-                    r1 = rnd.random()
+                    r1 = rnd.random() # randomizations
                     r2 = rnd.random()
-                    
-                    swarm[i].velocidad[k] = (
-                                              (w*swarm[i].velocidad[k]) +
-                                              (c1*r1*(swarm[i].mejor_posicion_sig[k] - swarm[i].posicion[k])) + 
-                                              (c2*r2*(mejor_enjambre_sig[k] - swarm[i].posicion[k]))
-                                            )
-                    if swarm[i].velocidad[k] <minx:
-                        swarm[i].velocidad[k] = minx
-                    elif swarm[i].velocidad[k] > maxx:
-                        swarm[i].velocidad[k] = maxx
-                
-                #calcular la nueva posición en función a la velocidad de cada particula
-                for k in range(dim):
-                    swarm[i].posicion[k] += swarm[i].velocidad[k]
-                
-                #Calcular el nuevo fitness de la nueva posicion
-                swarm[i].fitness = fitness(swarm[i].posicion)
-                
-                #Es esta nueva posición una nueva mejor particula
-                if swarm[i].fitness < swarm[i].mejor_fitnessVal_sig:
-                    swarm[i].mejor_fitnessVal_sig = swarm[i].fitness
-                    swarm[i].mejor_posicion_sig = copy.copy(swarm[i].posicion)
-                
-                #Es esta nueva posición una nueva mejor posición en todo el enjambre
-                if  swarm[i].fitness < mejor_enjambre_fitnessVal:
-                    mejor_enjambre_fitnessVal = swarm[i].fitness
-                    mejor_enjambre_sig = copy.copy(swarm[i].posicion)
-            
-            #Incrementar el contador del while hasta n_iteraciones
-            Iter +=1
-        
-        return mejor_enjambre_sig, mejor_enjambre_sig_hist, mejor_enjambre_fitnessVal_hist
+
+                    swarm[i].velocity[k] = (
+                                            (w * swarm[i].velocity[k]) +
+                                            (c1 * r1 * (swarm[i].best_part_pos[k] - swarm[i].position[k])) +
+                                            (c2 * r2 * (best_swarm_pos[k] -swarm[i].position[k]))
+                                        )
+
+
+                    # if velocity[k] is not in [minx, max]
+                    # then clip it
+                    if swarm[i].velocity[k] < minx:
+                        swarm[i].velocity[k] = minx
+                    elif swarm[i].velocity[k] > maxx:
+                        swarm[i].velocity[k] = maxx
+
+
+            # compute new position using new velocity
+            for k in range(dim):
+                swarm[i].position[k] += swarm[i].velocity[k]
+
+            # compute fitness of new position
+            swarm[i].fitness = fitness(swarm[i].position,x_points, y_points)
+
+            # is new position a new best for the particle?
+            if swarm[i].fitness < swarm[i].best_part_fitnessVal:
+                swarm[i].best_part_fitnessVal = swarm[i].fitness
+                swarm[i].best_part_pos = copy.copy(swarm[i].position)
+
+            # is new position a new best overall?
+            if swarm[i].fitness < best_swarm_fitnessVal:
+                best_swarm_fitnessVal = swarm[i].fitness
+                best_swarm_pos = copy.copy(swarm[i].position)
+
+            # for-each particle
+            Iter += 1
+        #end_while
+        return best_swarm_pos, best_swarm_pos_hist, best_swarm_fitnessVal_hist
+        # end pso
