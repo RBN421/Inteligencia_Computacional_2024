@@ -169,7 +169,7 @@ class Particula:
         rnd = random.Random(0)
 
         # create n random particles
-        swarm = [Particle(fitness, x_points, y_points, dim, minx, maxx, i) for i in range(n)]
+        swarm = [Particula(fitness, x_points, y_points, dim, minx, maxx, i) for i in range(n)]
 
         # compute the value of best_position and best_fitness in swarm
         best_swarm_pos = [0.0 for i in range(dim)]
